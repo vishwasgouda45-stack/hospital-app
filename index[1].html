@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart Doctor Appointments</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0F8B8D"><link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F3F8F8;--card:#fff;--ink:#0E2A3B;--mut:#5B7382;--teal:#0F8B8D;--mint:#DDF1EF;--amb:#E8A33D;--line:#D5E3E5;--red:#C94F4F;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1A22;--card:#12303D;--ink:#E8F3F3;--mut:#9DB6C0;--mint:#0F3F43;--line:#1F4655}}
+:root[data-theme="dark"]{--bg:#0B1A22;--card:#12303D;--ink:#E8F3F3;--mut:#9DB6C0;--mint:#0F3F43;--line:#1F4655}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,sans-serif;max-width:560px;margin:auto;min-height:100vh}
+button{font:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid var(--amb);outline-offset:2px}
+.pad{padding:18px 18px 96px}h1{font-size:26px;margin:0 0 4px;font-weight:800}h2{font-size:18px;margin:22px 0 10px}
+.mut{color:var(--mut);font-size:14px}
+.login{padding:60px 22px}.logo{width:56px;height:56px;border-radius:16px;background:var(--teal);display:grid;place-items:center;color:#fff;font-size:30px;font-weight:800;margin-bottom:18px}
+input{width:100%;padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;margin:6px 0 12px}
+.btn{width:100%;padding:14px;border:0;border-radius:12px;background:var(--teal);color:#fff;font-weight:600;font-size:16px}
+.btn.alt{background:var(--mint);color:var(--teal)}.btn.sm{width:auto;padding:10px 16px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px}
+.chip{flex:none;padding:9px 15px;border-radius:99px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.doc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;display:flex;gap:12px;align-items:center}
+.av{width:52px;height:52px;border-radius:50%;background:var(--mint);color:var(--teal);display:grid;place-items:center;font-weight:800;flex:none}
+.grow{flex:1;min-width:0}.name{font-weight:600}
+.q{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:var(--mint);color:var(--teal)}
+.q.busy{background:#F8E7C9;color:#8A5A0A}.q.full{background:#F6D9D9;color:var(--red)}
+.big{background:var(--teal);color:#fff;border-radius:20px;padding:20px;text-align:center}
+.big .n{font-size:64px;font-weight:800;line-height:1}.bar{height:8px;border-radius:9px;background:rgba(255,255,255,.3);margin-top:14px;overflow:hidden}.bar i{display:block;height:100%;background:#fff;transition:width .6s}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 16px}
+.slot{padding:11px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}.slot.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:560px;display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+nav button{flex:1;border:0;background:none;padding:10px;color:var(--mut);font-weight:600}nav button.on{color:var(--teal)}
+.back{border:0;background:none;color:var(--teal);font-weight:600;padding:0 0 12px}
+.st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.st div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;font-size:12px;color:var(--mut)}.st b{display:block;font-size:18px;color:var(--ink);margin-bottom:2px}
+.tag{padding:7px 12px;border-radius:99px;background:var(--mint);color:var(--teal);font-size:13px;font-weight:600}
+.off{position:fixed;inset:0;background:var(--bg);z-index:20;display:grid;place-content:center;justify-items:center;gap:10px;text-align:center;padding:30px}.off .logo{margin:0;background:var(--amb)}
+.toast{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;z-index:9}
+</style></head><body><div id="app"></div>
+<script>
+const SPECS=["All","General","Cardiology","Dermatology","Pediatrics","Orthopedics","ENT"];
+const DOCS=[
+["Dr. Ananya Rao","General","MBBS, 12 yrs",8],["Dr. Imran Shaikh","General","MBBS, MD, 7 yrs",6],
+["Dr. Meera Nair","Cardiology","DM Cardiology, 15 yrs",15],["Dr. Karan Mehta","Cardiology","DM, 9 yrs",14],
+["Dr. Sofia D'Souza","Dermatology","MD Dermatology, 10 yrs",10],["Dr. Vikram Patel","Pediatrics","MD Pediatrics, 13 yrs",9],
+["Dr. Neha Kulkarni","Orthopedics","MS Ortho, 11 yrs",12],["Dr. Arjun Iyer","ENT","MS ENT, 8 yrs",7]
+].map((d,i)=>({id:i,name:d[0],spec:d[1],bio:d[2],avg:d[3],serving:3+i%3,last:6+(i*3)%9,paused:false}));
+const AV=[{bg:"#CFE9E6",skin:"#C98F6B",hair:"#1d1a1a",long:1},{bg:"#E3E8F6",skin:"#B97E57",hair:"#231c18",gl:1},{bg:"#F6E3D6",skin:"#D9A27C",hair:"#2a2220",long:1},{bg:"#DDEBD8",skin:"#C58A63",hair:"#6b6b6b",gl:1},{bg:"#F3DDE6",skin:"#E0B08C",hair:"#3b2418",long:1,gl:1},{bg:"#FBEBC8",skin:"#C98F6B",hair:"#1d1a1a"},{bg:"#D9EAF5",skin:"#D2996F",hair:"#4a2e1f",long:1},{bg:"#E6E0F3",skin:"#B57A55",hair:"#2a2220",gl:1}];
+const INFO=[{yrs:12,r:4.8,fee:500,lang:"English, Hindi, Kannada",room:"Room 101",days:"Mon to Sat",about:"Family physician for fevers, infections, diabetes and blood pressure, and routine health checks."},
+{yrs:7,r:4.6,fee:400,lang:"English, Hindi, Urdu",room:"Room 102",days:"Mon to Fri",about:"General medicine with a focus on seasonal illness, lifestyle advice and preventive care."},
+{yrs:15,r:4.9,fee:900,lang:"English, Malayalam, Hindi",room:"Room 201",days:"Mon, Wed, Fri",about:"Heart specialist for chest pain, high blood pressure, ECG and heart-failure follow-up."},
+{yrs:9,r:4.7,fee:800,lang:"English, Hindi, Gujarati",room:"Room 202",days:"Tue, Thu, Sat",about:"Cardiologist focused on heart-rhythm problems and cholesterol management."},
+{yrs:10,r:4.8,fee:700,lang:"English, Hindi, Konkani",room:"Room 301",days:"Mon to Thu",about:"Treats acne, eczema, hair loss and allergic skin conditions in adults and teens."},
+{yrs:13,r:4.9,fee:600,lang:"English, Hindi, Gujarati",room:"Room 110",days:"Mon to Sat",about:"Child health from newborn care to teens: vaccinations, growth and common infections."},
+{yrs:11,r:4.7,fee:800,lang:"English, Kannada, Marathi",room:"Room 210",days:"Tue to Sat",about:"Bone, joint and sports injury care, including back pain and knee problems."},
+{yrs:8,r:4.6,fee:650,lang:"English, Tamil, Hindi",room:"Room 220",days:"Mon, Tue, Thu",about:"Ear, nose and throat care for sinus trouble, hearing issues and tonsils."}];
+function avatar(d,z){const a=AV[d.id];return `<svg viewBox="0 0 100 100" width="${z}" height="${z}" style="border-radius:50%;flex:none;display:block" role="img" aria-label="Illustration of ${d.name}"><rect width="100" height="100" fill="${a.bg}"/>${a.long?`<path d="M25 56c-4-32 6-44 25-44s29 12 25 44c0 10-3 18-8 22H33c-5-4-8-12-8-22z" fill="${a.hair}"/>`:""}<path d="M10 100c2-22 18-30 40-30s38 8 40 30z" fill="#fff"/><path d="M38 72l12 13 12-13" fill="none" stroke="#0F8B8D" stroke-width="5"/><path d="M34 74c-2 14 6 19 15 19" fill="none" stroke="#33485a" stroke-width="2.5"/><rect x="43" y="56" width="14" height="16" rx="6" fill="${a.skin}"/><ellipse cx="50" cy="44" rx="17" ry="20" fill="${a.skin}"/><path d="M32 41c0-17 8-25 18-25s18 8 18 25c-4-8-10-12-18-12s-14 4-18 12z" fill="${a.hair}"/><circle cx="43" cy="46" r="1.8" fill="#222"/><circle cx="57" cy="46" r="1.8" fill="#222"/><path d="M44 54q6 5 12 0" stroke="#7a3b2e" stroke-width="2" fill="none" stroke-linecap="round"/>${a.gl?'<g fill="none" stroke="#223" stroke-width="1.6"><circle cx="43" cy="46" r="6"/><circle cx="57" cy="46" r="6"/><path d="M49 46h2"/></g>':""}</svg>`}
+const HOSP={name:"Smart Care Hospital",tag:"Multi-speciality hospital with digital queue booking",addr:"12 Health Avenue, Medical District, Your City",phone:"+91 00000 00000",er:"+91 00000 11111",email:"care@smartcarehospital.example",opd:"Mon to Sat, 9:00 AM to 5:00 PM",visit:"Daily, 4:00 PM to 7:00 PM",beds:120,fac:["24x7 Emergency","Ambulance","Pharmacy","Diagnostic lab","X-ray and scan","Parking","Cafeteria","Free Wi-Fi","Wheelchair access"]};
+const SLOTS=["09:00","09:30","10:00","10:30","11:00","11:30","14:00","14:30","15:00"];
+const STAFF_HASH="45762bda51f2d6a9215b4193606b1113a285d2334943d045b3f8afc966850401";
+let S={user:null,role:"patient",lr:"patient",sd:0,tab:"docs",spec:"All",doc:null,slot:null,my:null,toast:""};
+try{const u=localStorage.getItem("sda_user");if(u){S.user=u;S.role=localStorage.getItem("sda_role")==="staff"&&localStorage.getItem("sda_ok")===STAFF_HASH?"staff":"patient";S.tab=S.role==="staff"?"manage":"docs"}}catch(e){}
+const $=id=>document.getElementById(id);
+function qClass(d){const a=d.last-d.serving;return a>8?"full":a>4?"busy":""}
+function toast(t){S.toast=t;render();setTimeout(()=>{S.toast="";render()},2200)}
+function sendOtp(re){let ph=S.ph;if(!re){const v=($("ph").value||"").trim();if(S.via==="email"){ph=v.toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ph))return toast("Enter a valid email address")}else{ph=v.replace(/\D/g,"");if(ph.length!==10)return toast("Enter a valid 10-digit mobile number")}}
+ else if(Date.now()-S.otpAt<30000)return toast("Wait 30 seconds before asking for a new OTP");
+ S.ph=ph;S.otp=String(100000+Math.floor(Math.random()*900000));S.otpAt=Date.now();S.tries=0;S.step="code";render();toast(re?"New OTP sent":"OTP sent")}
+function verifyOtp(){const c=($("ot").value||"").trim();
+ if(Date.now()-S.otpAt>300000){S.step="phone";render();return toast("OTP expired. Request a new one")}
+ if(c!==S.otp){S.tries=(S.tries||0)+1;if(S.tries>=3){S.step="phone";render();return toast("Too many wrong tries. Request a new OTP")}return toast("Wrong OTP. "+(3-S.tries)+" tries left")}
+ S.user=S.ph;S.role="patient";S.tab="docs";S.step="phone";S.otp=null;try{localStorage.setItem("sda_user",S.user);localStorage.setItem("sda_role","patient");localStorage.setItem("sda_ok","")}catch(x){}render()}
+function PH(){return S.step==="code"?`<p class="mut">Enter the 6-digit code sent to ${S.ph}.</p><div class="doc" style="padding:10px 14px"><span class="mut">Demo mode: your OTP is <b>${S.otp}</b>. Real SMS and email sending need a server.</span></div><label>OTP<input id="ot" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6-digit code"></label><button class="btn" onclick="verifyOtp()">Verify and log in</button><div style="display:flex;gap:8px;margin-top:10px"><button class="btn alt sm" onclick="sendOtp(true)">Resend OTP</button><button class="btn alt sm" onclick="S.step='phone';render()">Change number</button></div>`
+ :`<div class="chips"><button class="chip ${S.via==="email"?"":"on"}" onclick="S.via='phone';render()">Mobile</button><button class="chip ${S.via==="email"?"on":""}" onclick="S.via='email';render()">Email</button></div>${S.via==="email"?`<label>Email address<input id="ph" type="email" autocomplete="email" placeholder="you@example.com" value="${S.ph&&S.ph.includes("@")?S.ph:""}"></label>`:`<label>Mobile number<input id="ph" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" value="${S.ph&&!S.ph.includes("@")?S.ph:""}"></label>`}<button class="btn" onclick="sendOtp()">Send OTP</button><p class="mut">We send a 6-digit code to verify you each time you log in.</p>`}
+async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+async function login(){const e=$("em").value.trim().toLowerCase(),p=$("pw").value;
+ if(!e.includes("@")||p.length<4){toast("Enter a valid email and a password of 4+ characters");return}
+ if(S.lr==="staff"&&await sha(e+":"+p)!==STAFF_HASH){toast("This staff login is restricted to the authorized account");return}
+ S.user=e;S.role=S.lr;S.tab=S.role==="staff"?"manage":"docs";try{localStorage.setItem("sda_user",e);localStorage.setItem("sda_role",S.role);localStorage.setItem("sda_ok",S.role==="staff"?STAFF_HASH:"")}catch(x){}render()}
+function logout(){S.user=null;S.my=null;S.role="patient";S.lr="patient";S.step="phone";S.otp=null;try{localStorage.removeItem("sda_user")}catch(e){}render()}
+const BOOKED=new Set();
+function days(){return [...Array(7)].map((_,i)=>{const t=new Date();t.setDate(t.getDate()+i);return{i,iso:t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0"),top:i===0?"Today":i===1?"Tomorrow":t.toLocaleDateString(undefined,{weekday:"short"}),sub:t.toLocaleDateString(undefined,{day:"numeric",month:"short"}),full:t.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"})}})}
+function past(s,i){if(i)return false;const[h,m]=s.split(":"),n=new Date();return n.getHours()*60+n.getMinutes()>=(+h)*60+(+m)}
+function book(){const d=DOCS[S.doc],D=days()[S.dt||0],key=d.id+"|"+D.iso+"|"+S.slot;
+ if(BOOKED.has(key)){S.slot=null;return toast("That slot was just taken. Pick another")}
+ BOOKED.add(key);let token=null;if(!S.dt){d.last++;token=d.last}
+ S.my={doc:d.id,token,slot:S.slot,dateText:D.full,key};S.doc=null;S.slot=null;S.dt=0;S.tab="queue";
+ toast(token?"Booked. Your token is "+token:"Booked for "+D.full+" at "+S.my.slot)}
+function nextT(){const d=DOCS[S.sd];if(d.paused)return toast("Resume the queue first");if(d.serving<d.last){d.serving++;toast("Calling token "+d.serving)}else toast("No one is waiting")}
+function skipT(){const d=DOCS[S.sd];if(d.paused)return toast("Resume the queue first");if(d.serving<d.last){d.serving++;toast("Token "+d.serving+" skipped")}else toast("No one is waiting")}
+function walkin(){const d=DOCS[S.sd];d.last++;toast("Walk-in added as token "+d.last)}
+function pauseQ(){const d=DOCS[S.sd];d.paused=!d.paused;toast(d.paused?"Queue paused":"Queue resumed")}
+function cancel(){if(S.my&&S.my.key)BOOKED.delete(S.my.key);S.my=null;toast("Appointment cancelled")}
+setInterval(()=>{DOCS.forEach(d=>{if(S.role!=="staff"&&!d.paused&&d.serving<d.last&&Math.random()<.45)d.serving++});
+ if(S.my&&S.my.token&&DOCS[S.my.doc].serving>=S.my.token&&!S.my.done){S.my.done=1;toast("It's your turn. Please go in.")}else if(S.user)render()},4000);
+function docCard(d){return `<div class="doc">${avatar(d,56)}
+<div class="grow"><div class="name">${d.name}</div><div class="mut">${d.spec} · ${d.bio}</div><div class="mut">★ ${INFO[d.id].r} · ₹${INFO[d.id].fee} · ${INFO[d.id].room}</div>
+<span class="q ${d.paused?"full":qClass(d)}">${d.paused?"Queue paused":d.last-d.serving+" waiting · ~"+(d.last-d.serving)*d.avg+" min"}</span></div>
+<button class="btn sm" onclick="S.doc=${d.id};render()">Book</button></div>`}
+function view(){
+ if(!S.user)return `<div class="login"><div class="logo">+</div><h1>Smart Doctor Appointments</h1><p class="mut">Book a doctor and watch your queue live.</p>
+ <div class="chips"><button class="chip ${S.lr==="patient"?"on":""}" onclick="S.lr='patient';render()">Patient</button><button class="chip ${S.lr==="staff"?"on":""}" onclick="S.lr='staff';render()">Clinic staff</button></div>
+ ${S.lr==="patient"?PH():""}<div ${S.lr==="patient"?"hidden":""}><label>Email<input id="em" type="email" autocomplete="email" placeholder="you@example.com"></label>
+ <label>Password<input id="pw" type="password" autocomplete="current-password"></label>
+ <button class="btn" onclick="login()">Log in</button><p class="mut">${S.lr==="staff"?"Staff login is restricted to the authorized clinic account.":"Staff login is restricted to the authorized clinic account."}</p></div></div>`;
+ if(S.role==="staff"&&S.tab==="manage"){const d=DOCS[S.sd],w=d.last-d.serving,t=[];for(let i=d.serving+1;i<=Math.min(d.last,d.serving+8);i++)t.push(i);
+ return `<div class="pad"><h1>Manage queue</h1><div class="mut">Clinic staff · ${S.user}</div>
+ <div class="chips">${DOCS.map(x=>`<button class="chip ${S.sd===x.id?"on":""}" onclick="S.sd=${x.id};render()">${x.name.replace("Dr. ","")}</button>`).join("")}</div>
+ <div class="mut" style="margin-bottom:8px">${d.name} · ${d.spec}</div>
+ <div class="big"><div>Now serving</div><div class="n">${d.serving}</div><div>${d.paused?"Queue paused":w+" waiting · ~"+w*d.avg+" min"}</div></div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><button class="btn" onclick="nextT()">Call next</button><button class="btn alt" onclick="skipT()">Skip token</button><button class="btn alt" onclick="walkin()">Add walk-in</button><button class="btn alt" onclick="pauseQ()">${d.paused?"Resume queue":"Pause queue"}</button></div>
+ <h2>Waiting tokens</h2>${t.length?t.map(n=>`<div class="doc" style="padding:10px 14px"><div class="grow name">Token ${n}</div><span class="mut">~${(n-d.serving)*d.avg} min</span></div>`).join(""):'<p class="mut">No one is waiting.</p>'}</div>${nav()}`}
+ if(S.doc!==null){const d=DOCS[S.doc];return `<div class="pad"><button class="back" onclick="S.doc=null;render()">‹ Back</button><div style="text-align:center;display:grid;justify-items:center;gap:4px">${avatar(d,104)}<h1 style="margin-top:8px">${d.name}</h1><div class="mut">${d.spec} · ${d.bio}</div><span class="q ${d.paused?"full":qClass(d)}">${d.paused?"Queue paused":d.last-d.serving+" waiting now"}</span></div>
+ <div class="st"><div><b>${INFO[d.id].yrs} yrs</b>Experience</div><div><b>★ ${INFO[d.id].r}</b>Rating</div><div><b>₹${INFO[d.id].fee}</b>Fee</div></div>
+ <h2>About</h2><div class="mut">${INFO[d.id].about}</div>
+ <div class="mut" style="margin-top:10px">Languages: ${INFO[d.id].lang}<br>Clinic room: ${INFO[d.id].room}<br>Available: ${INFO[d.id].days}</div>
+ <h2>Pick a date</h2><div class="chips">${days().map(x=>`<button class="chip ${(S.dt||0)===x.i?"on":""}" onclick="S.dt=${x.i};S.slot=null;render()"><b style="display:block">${x.top}</b><span style="font-size:12px">${x.sub}</span></button>`).join("")}</div>
+ <h2>Pick a time</h2><div class="slots">${SLOTS.map(s=>{const off=past(s,S.dt||0)||BOOKED.has(d.id+"|"+days()[S.dt||0].iso+"|"+s);return `<button class="slot ${S.slot===s?"on":""}" ${off?"disabled style='opacity:.4;text-decoration:line-through'":`onclick="S.slot='${s}';render()"`}>${s}</button>`}).join("")}</div>${S.dt?'<div class="mut" style="margin:-6px 0 12px">Your token number is given on the appointment day.</div>':""}
+ <button class="btn" ${S.slot?"":"disabled style='opacity:.5'"} onclick="${S.slot?"book()":""}">Confirm booking</button></div>`}
+ let body="";
+ if(S.tab==="docs"){const l=DOCS.filter(d=>S.spec==="All"||d.spec===S.spec);
+  body=`<h1>Find a doctor</h1><div class="mut">Live queue lengths update every few seconds.</div>
+  <div class="chips">${SPECS.map(s=>`<button class="chip ${S.spec===s?"on":""}" onclick="S.spec='${s}';render()">${s}</button>`).join("")}</div>${l.map(docCard).join("")}`}
+ if(S.tab==="queue"){if(!S.my)body=`<h1>My queue</h1><p class="mut">You have no active appointment. Book a doctor to track your place in line.</p><button class="btn alt" onclick="S.tab='docs';render()">Find a doctor</button>`;
+  else if(!S.my.token){const d=DOCS[S.my.doc];body=`<h1>My queue</h1><div class="mut">${d.name} · ${d.spec}</div><div class="big" style="margin-top:14px"><div>Your appointment</div><div class="n" style="font-size:34px;margin:8px 0">${S.my.dateText}</div><div>${S.my.slot}</div></div><p class="mut">Your queue token is given on the appointment day, and live queue tracking starts then.</p><button class="btn alt" onclick="cancel()">Cancel appointment</button>`}
+  else{const d=DOCS[S.my.doc],ahead=Math.max(0,S.my.token-d.serving-1),p=Math.min(100,100*(d.serving)/S.my.token);
+  body=`<h1>My queue</h1><div class="mut">${d.name} · ${d.spec} · ${S.my.dateText}, ${S.my.slot}</div><h2></h2>
+  <div class="big"><div>Your token</div><div class="n">${S.my.token}</div><div>${d.serving>=S.my.token?"It's your turn":ahead+" ahead of you · ~"+(ahead+1)*d.avg+" min"}</div><div class="bar"><i style="width:${p}%"></i></div></div>
+  <div class="doc" style="margin-top:14px"><div class="grow"><div class="mut">Now serving</div><div class="name" style="font-size:22px">Token ${d.serving}</div></div><span class="q">Live</span></div>
+  <button class="btn alt" onclick="cancel()">Cancel appointment</button>`}}
+ if(S.tab==="hosp")body=`<h1>${HOSP.name}</h1><div class="mut">${HOSP.tag}</div>
+ <div class="st"><div><b>${HOSP.beds}</b>Beds</div><div><b>${DOCS.length}</b>Doctors</div><div><b>24x7</b>Emergency</div></div>
+ <h2>Contact</h2><div class="doc" style="display:block"><div class="mut">Address</div><div>${HOSP.addr}</div><div class="mut" style="margin-top:8px">Reception</div><div>${HOSP.phone}</div><div class="mut" style="margin-top:8px">Emergency line</div><div style="color:var(--red);font-weight:600">${HOSP.er}</div><div class="mut" style="margin-top:8px">Email</div><div>${HOSP.email}</div></div>
+ <h2>Timings</h2><div class="doc" style="display:block"><div class="mut">Outpatient (OPD)</div><div>${HOSP.opd}</div><div class="mut" style="margin-top:8px">Visiting hours</div><div>${HOSP.visit}</div></div>
+ <h2>Departments</h2>${SPECS.slice(1).map(k=>`<button class="doc" style="width:100%;text-align:left;color:inherit" onclick="S.spec='${k}';S.tab='docs';render()"><div class="grow name">${k}</div><span class="mut">${DOCS.filter(d=>d.spec===k).length} doctor${DOCS.filter(d=>d.spec===k).length>1?"s":""} ›</span></button>`).join("")}
+ <h2>Facilities</h2><div style="display:flex;flex-wrap:wrap;gap:8px">${HOSP.fac.map(f=>`<span class="tag">${f}</span>`).join("")}</div>`
+ if(S.tab==="me")body=`<h1>Profile</h1><p class="mut">${S.user} · ${S.role==="staff"?"Clinic staff":"Patient"}</p><button class="btn alt" onclick="logout()">Log out</button>`;
+ return `<div class="pad">${body}</div>${nav()}`}
+function nav(){return `<nav>${(S.role==="staff"?[["manage","Manage"],["me","Profile"]]:[["docs","Doctors"],["queue","Queue"],["hosp","Hospital"],["me","Profile"]]).map(t=>`<button class="${S.tab===t[0]?"on":""}" onclick="S.tab='${t[0]}';render()">${t[1]}</button>`).join("")}</nav>`}
+function render(){const f=document.activeElement&&document.activeElement.id,v=f?document.activeElement.value:"";
+ $("app").innerHTML=view()+(S.off?`<div class="off" role="alert"><div class="logo">!</div><h1>No internet connection</h1><p class="mut">Booking and the live queue need internet. Check your connection and try again.</p><button class="btn sm" onclick="S.off=!navigator.onLine;render()">Try again</button></div>`:"")+(S.toast?`<div class="toast" role="status">${S.toast}</div>`:"");
+ if(f&&$(f)){$(f).value=v;$(f).focus()}}
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+S.off=!navigator.onLine;
+addEventListener("offline",()=>{S.off=true;render()});addEventListener("online",()=>{S.off=false;render()});
+render();
+</script></body></html>
